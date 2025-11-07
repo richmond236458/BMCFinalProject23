@@ -8,7 +8,11 @@ import 'package:todo_firebase_app/providers/cart_provider.dart';
 import 'package:todo_firebase_app/screens/cart_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_firebase_app/screens/order_history_screen.dart';
-import 'package:todo_firebase_app/screens/profile_screen.dart'; // ✅ import your Profile screen here
+import 'package:todo_firebase_app/screens/profile_screen.dart';
+import 'package:todo_firebase_app/widgets/notifications_icon.dart';
+import 'package:todo_firebase_app/screens/chat_screen.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _userRole = 'user';
   final User? _currentUser = FirebaseAuth.instance.currentUser;
 
@@ -48,11 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentUser != null
-            ? 'Welcome, ${_currentUser!.email}'
-            : 'Home'),
-        actions: [
-          // 🛒 Cart Button with Badge
+        title: Image.asset(
+      'assets/image/splash_logo.png',
+        width: 10,
+        height: 40, // 4. Set a fixed height
+      ),
+
+      actions: [
+          // 🛒 Cart Button with Badge (Unchanged)
           Consumer<CartProvider>(
             builder: (context, cart, child) {
               return Badge(
@@ -72,7 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // 📜 Order History Button
+
+          const NotificationIcon(),
+          // --- END OF NEW WIDGET ---
+
+          //  My Orders Icon
           IconButton(
             icon: const Icon(Icons.receipt_long),
             tooltip: 'My Orders',
@@ -85,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // ⚙️ Admin Panel (only if admin)
+          //  Admin Panel (only if admin)
           if (_userRole == 'admin')
             IconButton(
               icon: const Icon(Icons.admin_panel_settings),
@@ -99,14 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
 
-          // 👤 Profile Button (replaced Logout)
+          //  Profile Button
           IconButton(
             icon: const Icon(Icons.person),
             tooltip: 'Profile',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(), // ✅ make sure this screen exists
+                  builder: (context) => const ProfileScreen(),
                 ),
               );
             },
@@ -114,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // 🏪 Product Grid
+      //  Product Grid
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('products')
@@ -148,8 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: products.length,
             itemBuilder: (context, index) {
               final productDoc = products[index];
-              final productData =
-              productDoc.data() as Map<String, dynamic>;
+              final productData = productDoc.data() as Map<String, dynamic>;
 
               return ProductCard(
                 productName: productData['name'],
@@ -170,6 +181,52 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+
+      floatingActionButton: _userRole == 'user'
+          ? StreamBuilder<DocumentSnapshot>( // 2. A new StreamBuilder
+        // 3. Listen to *this user's* chat document
+        stream: _firestore.collection('chats').doc(_currentUser!.uid).snapshots(),
+        builder: (context, snapshot) {
+
+          int unreadCount = 0;
+          // 4. Check if the doc exists and has our count field
+          if (snapshot.hasData && snapshot.data!.exists) {
+            // Ensure data is not null before casting
+            final data = snapshot.data!.data();
+            if (data != null) {
+              unreadCount = (data as Map<String, dynamic>)['unreadByUserCount'] ?? 0;
+            }
+          }
+
+          // 5. --- THE FIX for "trailing not defined" ---
+          //    We wrap the FAB in the Badge widget
+          return Badge(
+            // 6. Show the count in the badge
+            label: Text('$unreadCount'),
+            // 7. Only show the badge if the count is > 0
+            isLabelVisible: unreadCount > 0,
+            // 8. The FAB is now the *child* of the Badge
+            child: FloatingActionButton.extended(
+              icon: const Icon(Icons.support_agent),
+              label: const Text('Contact Admin'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      chatRoomId: _currentUser!.uid,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+          // --- END OF FIX ---
+        },
+      )
+          : null, // 9. If admin, don't show the FAB
     );
   }
 }
+
+
+

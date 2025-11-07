@@ -106,7 +106,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const Divider(thickness: 1),
                   const SizedBox(height: 16),
 
-                  // 📝 Description
+                  // Description
                   Text(
                     'About this item',
                     style: Theme.of(context).textTheme.titleLarge,

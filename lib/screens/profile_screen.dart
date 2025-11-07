@@ -23,7 +23,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // 1. User Info Section
             Text(
               'Logged in as:',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .titleMedium,
             ),
             Text(
               _currentUser?.email ?? 'Not logged in',
@@ -36,7 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // 2. Change Password Form
             Text(
               'Change Password',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .titleLarge,
             ),
             const SizedBox(height: 16),
             Form(
@@ -182,8 +188,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // 6. This is the "Logout" logic
   Future<void> _signOut() async {
-    // This will be heard by the AuthWrapper, which will
-    // automatically navigate the user to the LoginScreen.
+    // 2. Get the Navigator *before* the async call
+    //    (This avoids a "don't use BuildContext" warning)
+    final navigator = Navigator.of(context);
+
+    // 3. This is your existing code
     await _auth.signOut();
+
+    // 4. --- THIS IS THE FIX ---
+    //    After signing out, pop all screens until we are
+    //    back at the very first screen (which is our AuthWrapper).
+    //    The AuthWrapper will then correctly show the LoginScreen.
+    navigator.popUntil((route) => route.isFirst);
   }
 }

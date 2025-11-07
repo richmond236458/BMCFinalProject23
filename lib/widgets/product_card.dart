@@ -16,55 +16,69 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Card(
-        elevation: 3,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                  );
-                },
-              ),
+    // 1. The Card will get its style from our new 'cardTheme'
+    return Card(
+      // 2. The theme's 'clipBehavior' will handle the clipping
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 3. This Expanded makes the image take up most of the space
+          Expanded(
+            flex: 3, // Give the image 3 "parts" of the space
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover, // This makes the image fill its box
+
+              // Show a loading spinner
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(child: CircularProgressIndicator());
+              },
+
+              // Show an error icon
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                );
+              },
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+          ),
+
+          // 4. This Expanded holds the text
+          Expanded(
+            flex: 2, // Give the text 2 "parts" of the space
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  // Product Name
                   Text(
                     productName,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
-                    maxLines: 1,
+                    maxLines: 2, // Allow two lines for the name
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const Spacer(), // 5. Pushes the price to the bottom
+
+                  // Price
                   Text(
                     '₱${price.toStringAsFixed(2)}',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
+                        fontSize: 15,
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.bold
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
